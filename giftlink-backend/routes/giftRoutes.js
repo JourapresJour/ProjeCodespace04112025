@@ -1,5 +1,5 @@
 const express = require('express');
-const router = express = require('express');
+const router = express.Router();
 const { connectToDatabase } = require('../models/db'); // Tâche 4: Import
 
 // Route GET /api/gifts (Tâche 5: "/")

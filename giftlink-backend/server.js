@@ -16,7 +16,7 @@ const authRouter = require('./routes/authRoutes');
 app.use('/api/gifts', giftRouter);
 app.use('/api/auth', authRouter);
 
-// Tâche 7: Route qui sert /api/gifts/search
+// Tâche 7: Route qui sert /api/gifts/search (Note: utilise le router pour /api/gifts/search)
 app.use('/api/gifts/search', searchRouter); 
 
 app.get('/', (req, res) => {

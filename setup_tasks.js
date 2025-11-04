@@ -1,10 +1,12 @@
 const fs = require('fs');
 const path = require('path');
 
-const baseDir = path.join(__dirname, 'giftlink-backend');
+const backendDir = path.join(__dirname, 'giftlink-backend');
+const frontendDir = path.join(__dirname, 'giftlink-frontend', 'src', 'components');
 
 const filesToCreate = [
-    { path: 'models/db.js', content: `const { MongoClient } = require('mongodb');
+    // --- BACKEND FILES (TACHES 3-8, 11) ---
+    { dir: backendDir, path: 'models/db.js', content: `const { MongoClient } = require('mongodb');
 const url = process.env.MONGO_URI || 'mongodb://localhost:27017';
 const client = new MongoClient(url);
 let dbInstance;
@@ -24,8 +26,8 @@ async function connectToDatabase() {
 }
 module.exports = { connectToDatabase, client };`
     },
-    { path: 'routes/giftRoutes.js', content: `const express = require('express');
-const router = express = require('express');
+    { dir: backendDir, path: 'routes/giftRoutes.js', content: `const express = require('express');
+const router = express.Router();
 const { connectToDatabase } = require('../models/db'); // Tâche 4: Import
 
 // Route GET /api/gifts (Tâche 5: "/")
@@ -51,7 +53,7 @@ router.get('/:id', async (req, res) => {
 });
 module.exports = router;`
     },
-    { path: 'routes/searchRoutes.js', content: `const express = require('express');
+    { dir: backendDir, path: 'routes/searchRoutes.js', content: `const express = require('express');
 const router = express.Router();
 const { connectToDatabase } = require('../models/db');
 
@@ -73,7 +75,7 @@ router.get('/', async (req, res) => {
 });
 module.exports = router;`
     },
-    { path: 'sentiment/index.js', content: `// Tâche 8: Import du package natural
+    { dir: backendDir, path: 'sentiment/index.js', content: `// Tâche 8: Import du package natural
 const natural = require('natural'); 
 
 function analyzeSentiment(text) {
@@ -81,9 +83,13 @@ function analyzeSentiment(text) {
 }
 module.exports = { analyzeSentiment };`
     },
-    { path: 'routes/authRoutes.js', content: `const express = require('express');
+    { dir: backendDir, path: 'routes/authRoutes.js', content: `const express = require('express');
 const router = express.Router();
 const { connectToDatabase } = require('../models/db');
+
+router.post('/register', async (req, res) => {
+    res.status(200).json({ message: "Inscription réussie (mock)" });
+});
 
 router.post('/login', async (req, res) => {
     const { username } = req.body;
@@ -104,10 +110,75 @@ router.post('/login', async (req, res) => {
     }
 });
 module.exports = router;`
-    }
+    },
+    // --- FRONTEND FILES (TACHES 9, 10) ---
+    { dir: frontendDir, path: 'RegisterPage/RegisterPage.js', content: `import React, { useState } from 'react';
+
+function RegisterPage() {
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        
+        const response = await fetch('/api/auth/register', {
+            // Tâche 9: method et headers (Content-Type) requis
+            method: 'POST', 
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ username, password }),
+        });
+        // ... (gestion de la réponse)
+    };
+
+    return (
+        <form onSubmit={handleSubmit}>
+            <h2>S'inscrire</h2>
+            <input type="text" value={username} onChange={e => setUsername(e.target.value)} placeholder="Nom d'utilisateur" required />
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Mot de passe" required />
+            <button type="submit">S'inscrire</button>
+        </form>
+    );
+}
+export default RegisterPage;`
+    },
+    { dir: frontendDir, path: 'LoginPage/LoginPage.js', content: `import React, { useState } from 'react';
+
+function LoginPage() {
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        const token = 'MOCK_JWT_TOKEN'; // Simule un jeton
+        
+        const response = await fetch('/api/auth/login', {
+            method: 'POST',
+            // Tâche 10: Content-Type et Authorization requis
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': \`Bearer \${token}\`, 
+            },
+            body: JSON.stringify({ username, password }),
+        });
+        // ... (gestion de la réponse)
+    };
+
+    return (
+        <form onSubmit={handleSubmit}>
+            <h2>Connexion</h2>
+            <input type="text" value={username} onChange={e => setUsername(e.target.value)} placeholder="Nom d'utilisateur" required />
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Mot de passe" required />
+            <button type="submit">Se connecter</button>
+        </form>
+    );
+}
+export default LoginPage;`
+    },
 ];
 
-// Contenu minimal pour server.js pour inclure la Tâche 7 (écrase le contenu existant)
+// Contenu pour server.js (Tâche 7) - Écrase le contenu existant
 const serverJsContent = `const express = require('express');
 const cors = require('cors');
 const app = express();
@@ -126,7 +197,7 @@ const authRouter = require('./routes/authRoutes');
 app.use('/api/gifts', giftRouter);
 app.use('/api/auth', authRouter);
 
-// Tâche 7: Route qui sert /api/gifts/search
+// Tâche 7: Route qui sert /api/gifts/search (Note: utilise le router pour /api/gifts/search)
 app.use('/api/gifts/search', searchRouter); 
 
 app.get('/', (req, res) => {
@@ -144,8 +215,9 @@ function setupTasks() {
     try {
         console.log("Démarrage de la configuration des tâches...");
         
+        // Crée ou met à jour les fichiers listés
         for (const file of filesToCreate) {
-            const filePath = path.join(baseDir, file.path);
+            const filePath = path.join(file.dir, file.path);
             const dirPath = path.dirname(filePath);
             
             fs.mkdirSync(dirPath, { recursive: true });
@@ -154,11 +226,12 @@ function setupTasks() {
             console.log(`✅ Fichier créé/mis à jour: ${file.path}`);
         }
         
-        const serverPath = path.join(baseDir, 'server.js');
+        // Met à jour server.js (Tâche 7)
+        const serverPath = path.join(backendDir, 'server.js');
         fs.writeFileSync(serverPath, serverJsContent, 'utf8');
         console.log("✅ Fichier server.js mis à jour (Tâche 7).");
         
-        console.log("\n🚀 Opération réussie. Tous les fichiers backend requis ont été mis à jour.");
+        console.log("\n🚀 Opération réussie. Tous les fichiers requis ont été mis à jour.");
         
     } catch (error) {
         console.error("\n❌ Erreur critique lors de l'exécution du script:", error.message);

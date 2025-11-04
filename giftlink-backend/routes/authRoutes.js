@@ -2,6 +2,10 @@ const express = require('express');
 const router = express.Router();
 const { connectToDatabase } = require('../models/db');
 
+router.post('/register', async (req, res) => {
+    res.status(200).json({ message: "Inscription réussie (mock)" });
+});
+
 router.post('/login', async (req, res) => {
     const { username } = req.body;
     try {
